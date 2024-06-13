@@ -324,6 +324,7 @@ bool Telemetry::AppendTelemetryPackage(uint8_t *package)
 #if defined(HAS_MSP_VTX) && defined(TARGET_RX)
                     mspVtxProcessPacket(package);
 #endif
+                }
                     // there is already another response stored
                     if (payloadTypes[targetIndex].updated)
                     {
@@ -336,7 +337,6 @@ bool Telemetry::AppendTelemetryPackage(uint8_t *package)
                     {
                         targetFound = false;
                     }
-                }
             }
         }
         else
