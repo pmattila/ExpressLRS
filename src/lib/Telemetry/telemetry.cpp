@@ -324,18 +324,19 @@ bool Telemetry::AppendTelemetryPackage(uint8_t *package)
 #if defined(HAS_MSP_VTX) && defined(TARGET_RX)
                     mspVtxProcessPacket(package);
 #endif
-                    // there is already another response stored
-                    if (payloadTypes[targetIndex].updated)
-                    {
-                        // use other slot
-                        targetIndex = payloadTypesCount - 1;
-                    }
+                }
 
-                    // if both slots are taked do not overwrite other data since the first chunk would be lost
-                    if (payloadTypes[targetIndex].updated)
-                    {
-                        targetFound = false;
-                    }
+                // there is already another response stored
+                if (payloadTypes[targetIndex].updated)
+                {
+                    // use other slot
+                    targetIndex = payloadTypesCount - 1;
+                }
+
+                // if both slots are taked do not overwrite other data since the first chunk would be lost
+                if (payloadTypes[targetIndex].updated)
+                {
+                    targetFound = false;
                 }
             }
         }
