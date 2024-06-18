@@ -83,17 +83,13 @@ void Telemetry::CheckCrsfBaroSensorDetected()
 
 PAYLOAD_DATA(GPS, BATTERY_SENSOR, ATTITUDE, DEVICE_INFO, FLIGHT_MODE, VARIO, BARO_ALTITUDE);
 
+static uint8_t txPayload[CRSF_FRAME_SIZE_MAX];
+
 bool Telemetry::GetNextPayload(uint8_t* nextPayloadSize, uint8_t **payloadData)
 {
     uint8_t checks = 0;
     uint8_t oldPayloadIndex = currentPayloadIndex;
     uint8_t realLength = 0;
-
-    if (payloadTypes[currentPayloadIndex].locked)
-    {
-        payloadTypes[currentPayloadIndex].locked = false;
-        payloadTypes[currentPayloadIndex].updated = false;
-    }
 
     do
     {
@@ -103,13 +99,13 @@ bool Telemetry::GetNextPayload(uint8_t* nextPayloadSize, uint8_t **payloadData)
 
     if (payloadTypes[currentPayloadIndex].updated)
     {
-        payloadTypes[currentPayloadIndex].locked = true;
-
+        payloadTypes[currentPayloadIndex].updated = false;
         realLength = CRSF_FRAME_SIZE(payloadTypes[currentPayloadIndex].data[CRSF_TELEMETRY_LENGTH_INDEX]);
-        if (realLength > 0)
+        if (realLength > 0 && realLength <= CRSF_FRAME_SIZE_MAX)
         {
+            memcpy(txPayload, payloadTypes[currentPayloadIndex].data, realLength);
             *nextPayloadSize = realLength;
-            *payloadData = payloadTypes[currentPayloadIndex].data;
+            *payloadData = txPayload;
             return true;
         }
     }
@@ -150,7 +146,6 @@ void Telemetry::ResetState()
 
     for (int8_t i = 0; i < payloadTypesCount; i++)
     {
-        payloadTypes[i].locked = false;
         payloadTypes[i].updated = false;
         payloadTypes[i].data = PayloadData + offset;
         offset += payloadTypes[i].size;
@@ -367,7 +362,7 @@ bool Telemetry::AppendTelemetryPackage(uint8_t *package)
         }
     }
 
-    if (targetFound && !payloadTypes[targetIndex].locked)
+    if (targetFound)
     {
         memcpy(payloadTypes[targetIndex].data, package, CRSF_FRAME_SIZE(package[CRSF_TELEMETRY_LENGTH_INDEX]));
         payloadTypes[targetIndex].updated = true;
