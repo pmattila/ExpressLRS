@@ -144,6 +144,7 @@ void Telemetry::ResetState()
     telemetry_state = TELEMETRY_IDLE;
     currentTelemetryByte = 0;
     currentPayloadIndex = 0;
+    currentQueueIndex = 0;
     receivedPackages = 0;
 
     uint8_t offset = 0;
@@ -336,6 +337,26 @@ bool Telemetry::AppendTelemetryPackage(uint8_t *package)
                     {
                         targetFound = false;
                     }
+                }
+                else if (header->type == CRSF_FRAMETYPE_ROTORFLIGHT_TELEMETRY)
+                {
+                    // This code is emulating a two slot FIFO with head dropping
+                    if (currentPayloadIndex == payloadTypesCount - 2 && payloadTypes[currentPayloadIndex].locked)
+                    {
+                        // Sending the first slot, use the second
+                        targetIndex = payloadTypesCount - 1;
+                    }
+                    else if (currentPayloadIndex == payloadTypesCount - 1 && payloadTypes[currentPayloadIndex].locked)
+                    {
+                        // Sending the second slot, use the first
+                        targetIndex = payloadTypesCount - 2;
+                    }
+                    else if (currentQueueIndex == payloadTypesCount - 2 && payloadTypes[currentQueueIndex].updated)
+                    {
+                        // Previous frame saved to the first slot, use the second
+                        targetIndex = payloadTypesCount - 1;
+                    }
+                    currentQueueIndex = targetIndex;
                 }
             }
         }
