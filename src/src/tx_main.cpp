@@ -278,7 +278,14 @@ expresslrs_tlm_ratio_e ICACHE_RAM_ATTR UpdateTlmRatioEffective()
   // TLM ratio is boosted for one sync cycle when the MspSender goes active
   if (MspSender.IsActive())
   {
-    retVal = TLM_RATIO_1_2;
+    if (!OtaIsFullRes && config.GetSwitchMode() == smWideOr8ch)
+    {
+      retval = (ratioConfigured >= TLM_RATIO_1_128 && ratioConfigured <= TLM_RATIO_1_8) ? TLM_RATIO_1_8 : ratioConfigured;
+    }
+    else
+    {
+      retVal = TLM_RATIO_1_2;
+    }
   }
   // If Armed, telemetry is disabled, otherwise use STD
   else if (ratioConfigured == TLM_RATIO_DISARMED)
